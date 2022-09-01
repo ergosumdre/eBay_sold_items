@@ -16,15 +16,14 @@ library(RSelenium)
 library(lubridate)
 library(rvest)
 library(stringr)
+library(dplyr)
 
-# start Selenium
+# Pagination
 main_page <- "https://www.ebay.com/sch/i.html?_from=R40&_nkw=1+Troy+oz+999+SILVER+Round&_sacat=0&rt=nc&LH_Sold=1&LH_Complete=1&_ipg=240"
 rD <- rsDriver(browser="firefox", port=2948L, verbose=F)
 remDr <- rD[["client"]]
 remDr$navigate(main_page)
 html <- remDr$getPageSource()[[1]]
-
-# Pagination
 page_links <- read_html(html) %>%
   html_nodes("a.pagination__item") %>%
   str_extract(., "https://www.ebay.com/sch/i.html.*pgn") %>%
@@ -34,9 +33,9 @@ colnames(page_links) = "link"
 link_ending <- paste0("=", seq(length(page_links$link)))
 links <- paste0(page_links$link, link_ending)
 goToPage <- c(main_page, links)
-goToPage <- gsub("amp;", "&", goToPage) # remove ampersand symbols
+goToPage <- gsub("amp;", "&", goToPage)
 
-# Listings to dataframe
+
 listings <- function(link){
   remDr$navigate(link) # go to page
   html <- remDr$getPageSource()[[1]]
@@ -44,7 +43,7 @@ listings <- function(link){
     html_nodes("div.s-item__title.s-item__title--has-tags") %>% # type of table/class and title of table/class
     rvest::html_text() %>% # get text
     stringr::str_squish() # remove any whitespaces
-  sold_price <- read_html(html) %>%
+  price_sold <- read_html(html) %>%
     html_nodes("span.s-item__price") %>%
     rvest::html_text() %>%
     stringr::str_squish()
@@ -58,7 +57,7 @@ listings <- function(link){
     str_extract(., "https://www.ebay.com/itm/.*\\?") %>% 
     gsub("\\?", "", .)
   listings <- data.frame("title" = title,
-                         "sold_price" = sold_price[-1], # weird HTML code
+                         "price_sold" = price_sold[-1], # weird HTML code
                          "date_sold" = date_sold,
                          "item_link" = link[-1]) # weird HTML code
   return(listings)
