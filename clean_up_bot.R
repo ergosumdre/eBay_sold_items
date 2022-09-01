@@ -1,7 +1,7 @@
 # Author Dre Dyson
 # Github link: https://github.com/ergosumdre
 # 
-# TODO -- Clean this up
+# 
 # 
 # This script will return All Sold Items on Ebay given a Sold/Completed URL. 
 # Pseudo code:
@@ -68,6 +68,7 @@ if(moreThanTenK == FALSE){
 listings <- function(link){
   remDr$navigate(link) # go to page
   html <- remDr$getPageSource()[[1]]
+  Sys.sleep(5)
   title <- read_html(html) %>% # parse HTML
     html_nodes("div.s-item__title.s-item__title--has-tags") %>% # type of table/class and title of table/class
     rvest::html_text() %>% # get text
@@ -98,3 +99,4 @@ all_listings <- lapply(goToPage, listings) # do function
 
 all_sold_items_df <- do.call(rbind.data.frame, all_listings) # unlist data into dataframe
 pivot_table <- all_sold_items_df %>% group_by(title) %>% tally() %>% arrange(desc(n))
+
